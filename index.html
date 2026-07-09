@@ -20,11 +20,11 @@ const { useState, useEffect } = React;
 
 const CUSTOMERS = [
   { name: "Demo Org", groupRef: "g2-ref", installations: 2, lastUpdated: "Jun 17, 2026, 06:21:08 PM", health: "degraded", failedInstallations: 1, totalFailures7d: 1 },
-  { name: "Demo Org", groupRef: "g1-ref", installations: 2, lastUpdated: "Jun 12, 2026, 08:44:51 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
-  { name: "Demo Org", groupRef: "g0-ref", installations: 1, lastUpdated: "May 26, 2026, 03:23:44 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
+  { name: "Loom", groupRef: "loom-ref", installations: 2, lastUpdated: "Jun 12, 2026, 08:44:51 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
+  { name: "Linear", groupRef: "linear-ref", installations: 1, lastUpdated: "May 26, 2026, 03:23:44 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
   { name: "Spreedly", groupRef: "spreedly-ref", installations: 3, lastUpdated: "May 4, 2026, 11:15:22 AM", health: "unhealthy", failedInstallations: 2, totalFailures7d: 59 },
-  { name: "demo-group", groupRef: "demo-group-id", installations: 1, lastUpdated: "Jan 21, 2026, 11:56:52 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
-  { name: "demo-group-name-2", groupRef: "gar-demo-2", installations: 1, lastUpdated: "Jun 29, 2025, 05:26:00 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
+  { name: "Retool", groupRef: "retool-ref", installations: 1, lastUpdated: "Jan 21, 2026, 11:56:52 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
+  { name: "Vercel", groupRef: "vercel-ref", installations: 1, lastUpdated: "Jun 29, 2025, 05:26:00 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
 ];
 
 const INSTALLATIONS = {
