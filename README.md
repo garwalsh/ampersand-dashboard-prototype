@@ -1,12 +1,14 @@
 # Ampersand Dashboard — Troubleshooting Redesign
 
-An interactive React prototype exploring how [Ampersand's](https://www.withampersand.com/) dashboard could surface integration failures faster, plus three proposed API endpoints to close the remaining gaps. Built as a product take-home.
+An interactive React prototype exploring how [Ampersand's](https://www.withampersand.com/) dashboard could surface integration failures faster, plus three proposed API endpoints to close the remaining gaps.
 
 ## View it
 
 Live: https://garwalsh.github.io/ampersand-dashboard-prototype/
 
-Or open `index.html` locally. No install, no build step.
+Walkthrough video: https://youtu.be/toYYeHjPhsM
+
+Or open `index.html` locally.
 
 ## What's in the prototype
 
@@ -27,7 +29,7 @@ Or open `index.html` locally. No install, no build step.
 
 Single-file HTML, React 18 + Babel via CDN, no build step. State and demo data are top-level consts at the top of `index.html`.
 
-**Why:** for a prototype meant to be reviewed by a small team, "open the file, it runs" beats "clone, install, dev-run" every time. The same principle compresses the loop between a spec and a PR — which matters for a PM working alongside a small eng team.
+**Why:** for a prototype meant to be reviewed by a small team, "open the file, it runs" beats "clone, install, dev-run" every time. The same principle compresses the loop between a spec and a PR which matters for a PM working alongside a small eng team.
 
 **What I'd change for production:**
 
