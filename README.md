@@ -4,7 +4,9 @@ An interactive React prototype exploring how [Ampersand's](https://www.withamper
 
 ## View it
 
-Open `ampersand-demo.html` in a browser. No install, no build step.
+Live: https://garwalsh.github.io/ampersand-dashboard-prototype/
+
+Or open `index.html` locally. No install, no build step.
 
 ## What's in the prototype
 
@@ -23,7 +25,7 @@ Open `ampersand-demo.html` in a browser. No install, no build step.
 
 ## Technical approach
 
-Single-file HTML, React 18 + Babel via CDN, no build step. State and demo data are top-level consts at the top of `ampersand-demo.html`.
+Single-file HTML, React 18 + Babel via CDN, no build step. State and demo data are top-level consts at the top of `index.html`.
 
 **Why:** for a prototype meant to be reviewed by a small team, "open the file, it runs" beats "clone, install, dev-run" every time. The same principle compresses the loop between a spec and a PR — which matters for a PM working alongside a small eng team.
 
@@ -36,7 +38,7 @@ Single-file HTML, React 18 + Babel via CDN, no build step. State and demo data a
 
 ## Data model
 
-All demo data lives at the top of `ampersand-demo.html`:
+All demo data lives at the top of `index.html`:
 
 - `CUSTOMERS` — six orgs; Spreedly is the intentionally unhealthy scenario
 - `INSTALLATIONS` — keyed by customer name; only Spreedly and Demo Org have entries
