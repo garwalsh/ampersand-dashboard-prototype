@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ampersand Dashboard — Troubleshooting Redesign</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const CUSTOMERS = [
+  { name: "Demo Org", groupRef: "g2-ref", installations: 2, lastUpdated: "Jun 17, 2026, 06:21:08 PM", health: "degraded", failedInstallations: 1, totalFailures7d: 1 },
+  { name: "Demo Org", groupRef: "g1-ref", installations: 2, lastUpdated: "Jun 12, 2026, 08:44:51 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
+  { name: "Demo Org", groupRef: "g0-ref", installations: 1, lastUpdated: "May 26, 2026, 03:23:44 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
+  { name: "Spreedly", groupRef: "spreedly-ref", installations: 3, lastUpdated: "May 4, 2026, 11:15:22 AM", health: "unhealthy", failedInstallations: 2, totalFailures7d: 59 },
+  { name: "demo-group", groupRef: "demo-group-id", installations: 1, lastUpdated: "Jan 21, 2026, 11:56:52 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
+  { name: "demo-group-name-2", groupRef: "gar-demo-2", installations: 1, lastUpdated: "Jun 29, 2025, 05:26:00 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
+];
+
+const INSTALLATIONS = {
+  "Spreedly": [
+    { provider: "Netsuite", integration: "readAndWriteNetsuite", installationId: "a82ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Failure", created: "Apr 10, 2026, 02:15:00 PM", connection: "working", failuresLast7d: 12, lastError: "400 Bad Request — Invalid record reference", lastErrorTime: "May 4, 10:22 PM", recordsSynced7d: 156 },
+    { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Success", created: "Mar 22, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 0, lastError: null, lastErrorTime: null, recordsSynced7d: 842 },
+    { provider: "Hubspot", integration: "readContacts", installationId: "f29d1a3b-88cd-4e12-b3a1-7890abcdef12", lastStatus: "Success", created: "Feb 15, 2026, 10:30:00 AM", connection: "bad_credentials", failuresLast7d: 47, lastError: "401 Unauthorized — Token expired", lastErrorTime: "May 4, 8:00 AM", recordsSynced7d: 0 },
+  ],
+  "Demo Org": [
+    { provider: "Fathom", integration: "readAndWriteFathom", installationId: "992ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Success", created: "Jun 12, 2026, 10:47:14 PM", connection: "working", failuresLast7d: 0, lastError: null, lastErrorTime: null, recordsSynced7d: 382 },
+    { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Unknown", created: "Jun 17, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 1, lastError: "429 Too Many Requests — API limit exceeded", lastErrorTime: "Jun 16, 2:22 PM", recordsSynced7d: 270 },
+  ],
+};
+
+const OPERATIONS = [
+  { time: "05/04/2026 10:00:00 PM", action: "Read", status: "success", records: "78 records synced", result: "200 OK", searchContent: "invoice inv-5012 Spreedly Technology 200 OK" },
+  { time: "05/04/2026 09:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "400 bad request", searchContent: "invoice inv-4821 Spreedly 400 Bad Request Invalid record reference" },
+  { time: "05/04/2026 08:00:00 PM", action: "Read", status: "success", records: "28 records synced", result: "200 OK", searchContent: "invoice inv-4800 Airbnb Technology 200 OK" },
+  { time: "05/04/2026 07:00:00 PM", action: "Read", status: "success", records: "2 records synced", result: "200 OK", searchContent: "invoice inv-4799 Stripe Financial 200 OK" },
+  { time: "05/04/2026 06:00:00 PM", action: "Read", status: "success", records: "32 records synced", result: "200 OK", searchContent: "invoice inv-4750 Plaid Banking 200 OK" },
+  { time: "05/04/2026 05:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "401 unauthorized", searchContent: "invoice inv-4700 401 Unauthorized Token expired" },
+  { time: "05/04/2026 04:00:00 PM", action: "Read", status: "success", records: "17 records synced", result: "200 OK", searchContent: "invoice inv-4650 Ramp Corporate 200 OK" },
+  { time: "05/04/2026 03:00:00 PM", action: "Read", status: "success", records: "14 records synced", result: "200 OK", searchContent: "invoice inv-4600 Brex Financial 200 OK" },
+  { time: "05/03/2026 11:00:00 PM", action: "Read", status: "success", records: "45 records synced", result: "200 OK", searchContent: "invoice inv-4550 Gusto Payroll 200 OK" },
+  { time: "05/03/2026 09:00:00 PM", action: "Write", status: "failure", records: "Failure, 0 records synced", result: "400 bad request", searchContent: "invoice inv-4821 Spreedly 400 Bad Request duplicate record" },
+  { time: "05/02/2026 10:00:00 AM", action: "Read", status: "success", records: "22 records synced", result: "200 OK", searchContent: "invoice inv-4500 Deel HR 200 OK" },
+  { time: "05/01/2026 03:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "429 too many requests", searchContent: "429 Too Many Requests API limit exceeded" },
+];
+
+const ALERTS = [
+  { id: "alert-1", severity: "critical", type: "connection.credentials_expired", title: "Hubspot credentials expired for Spreedly", message: "OAuth token for Spreedly's Hubspot integration (readContacts) expired. No records synced since May 4, 8:00 AM UTC. End customer needs to re-authenticate.", customer: "Spreedly", provider: "Hubspot", time: "May 4, 2026, 8:00 AM", acknowledged: false, customerRef: "spreedly-ref", installationIdx: 2, operationIdx: null },
+  { id: "alert-2", severity: "critical", type: "operation.repeated_failures", title: "Netsuite read failing repeatedly for Spreedly", message: "12 consecutive read failures in the last 24 hours. Most recent error: 400 Bad Request — Invalid record reference.", customer: "Spreedly", provider: "Netsuite", time: "May 4, 2026, 10:22 PM", acknowledged: false, customerRef: "spreedly-ref", installationIdx: 0, operationIdx: 1 },
+  { id: "alert-3", severity: "warning", type: "operation.failure", title: "Salesforce API rate limit hit for Demo Org", message: "1 read failure for Demo Org's Salesforce integration. Error: 429 Too Many Requests — API limit exceeded. Next retry scheduled.", customer: "Demo Org", provider: "Salesforce", time: "Jun 16, 2026, 2:22 PM", acknowledged: false, customerRef: "g2-ref", installationIdx: 1, operationIdx: 11 },
+  { id: "alert-4", severity: "warning", type: "read.schedule.paused", title: "Netsuite scheduled read paused for Spreedly", message: "Scheduled reads have been paused due to repeated failures. Manual intervention required to resume.", customer: "Spreedly", provider: "Netsuite", time: "May 4, 2026, 11:00 PM", acknowledged: true, customerRef: "spreedly-ref", installationIdx: 0, operationIdx: null },
+  { id: "alert-5", severity: "info", type: "operation.partial_success", title: "Partial sync for Demo Org Fathom", message: "382 of 400 records synced successfully. 18 records skipped due to missing required fields.", customer: "Demo Org", provider: "Fathom", time: "Jun 12, 2026, 10:47 PM", acknowledged: true, customerRef: "g2-ref", installationIdx: 0, operationIdx: null },
+];
+
+const NAV_ITEMS = [
+  { icon: "users", label: "Customers", id: "customers" },
+  { icon: "alert-triangle", label: "Alerts", id: "alerts", badge: 2 },
+  { icon: "bolt", label: "Integrations", id: "integrations" },
+  { icon: "settings", label: "Project settings", id: "settings", children: true },
+  { icon: "layout-grid", label: "Provider apps", id: "provider" },
+  { icon: "send", label: "Destinations", id: "destinations" },
+  { icon: "bell", label: "Notifications", id: "notifications" },
+];
+
+function Sidebar({ active, onNavigate }) {
+  return (
+    <div style={{
+      width: 220, borderRight: "1px solid #e5e5e5", background: "#fafafa",
+      padding: "16px 0", display: "flex", flexDirection: "column", gap: 2,
+      flexShrink: 0, height: "100%",
+    }}>
+      <div style={{ padding: "8px 16px 20px", fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 14, color: "#7c3aed" }}>&lt;/&gt;</span>
+        <span style={{ fontWeight: 500, color: "#333" }}>amp-gar-test</span>
+        <span style={{ fontSize: 10, color: "#999" }}>▾</span>
+      </div>
+      {NAV_ITEMS.map(item => (
+        <div
+          key={item.id}
+          onClick={() => onNavigate && (item.id === "customers" || item.id === "alerts") && onNavigate(item.id)}
+          style={{
+            padding: "8px 16px", fontSize: 14, display: "flex", alignItems: "center", gap: 10,
+            color: active === item.id ? "#7c3aed" : "#444",
+            background: active === item.id ? "#f3f0ff" : "transparent",
+            borderLeft: active === item.id ? "2px solid #7c3aed" : "2px solid transparent",
+            cursor: (item.id === "customers" || item.id === "alerts") ? "pointer" : "default",
+          }}
+        >
+          <i className={`ti ti-${item.icon}`} style={{ fontSize: 18 }} />
+          <span>{item.label}</span>
+          {item.badge && (
+            <span style={{
+              marginLeft: "auto", background: "#dc2626", color: "#fff",
+              fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 10,
+            }}>{item.badge}</span>
+          )}
+          {item.children && <span style={{ marginLeft: "auto", fontSize: 10, color: "#999" }}>▾</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Badge({ children }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      padding: "4px 12px", border: "1px solid #e5e5e5", borderRadius: 6,
+      fontSize: 12, color: "#555", background: "#fff",
+    }}>
+      {children}
+    </span>
+  );
+}
+
+function StatusBadge({ status }) {
+  const colors = {
+    Success: { bg: "#ecfdf5", color: "#059669", border: "#a7f3d0" },
+    Failure: { bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
+    Unknown: { bg: "#f3f4f6", color: "#6b7280", border: "#d1d5db" },
+  };
+  const c = colors[status] || colors.Unknown;
+  return (
+    <span style={{
+      padding: "3px 10px", borderRadius: 4, fontSize: 13, fontWeight: 500,
+      background: c.bg, color: c.color, border: `1px solid ${c.border}`,
+    }}>
+      {status}
+    </span>
+  );
+}
+
+function SelectFilter({ value, onChange, options, label }) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      style={{
+        padding: "6px 28px 6px 10px", border: "1px solid #e5e5e5", borderRadius: 6,
+        fontSize: 13, color: "#444", background: "#fff", outline: "none",
+        cursor: "pointer",
+      }}
+    >
+      <option value="">{label}</option>
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  );
+}
+
+function CustomersList({ onSelectCustomer }) {
+  return (
+    <div style={{ flex: 1, padding: "24px 32px", overflow: "auto" }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, margin: 0, color: "#111" }}>Customers</h1>
+      <div style={{
+        background: "#fff", border: "1px solid #e5e5e5", borderRadius: 8,
+        marginTop: 20, padding: "24px",
+      }}>
+        <h2 style={{ fontSize: 17, fontWeight: 600, margin: "0 0 6px", color: "#111" }}>Customers Overview</h2>
+        <p style={{ fontSize: 14, color: "#666", margin: "0 0 16px", lineHeight: 1.5 }}>
+          Overview of all customers with active installations. Click any customer row below to view detailed installation information and configuration.
+        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <Badge><span style={{ fontSize: 11, fontWeight: 600, color: "#888", letterSpacing: 0.5 }}>TOTAL CUSTOMERS</span> <span style={{ fontWeight: 600 }}>{CUSTOMERS.length}</span></Badge>
+          <span style={{ fontSize: 14, color: "#7c3aed", cursor: "pointer" }}>View customers data →</span>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <input
+            type="text" placeholder="Search"
+            style={{
+              width: "100%", padding: "8px 12px", border: "1px solid #e5e5e5",
+              borderRadius: 6, fontSize: 14, outline: "none", background: "#fff",
+            }}
+          />
+        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}></th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Customer Name ↕</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Group Ref ↕</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Health</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Installations ↕</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13, background: "#f5f3ff" }}>Last Updated ↓</th>
+            </tr>
+          </thead>
+          <tbody>
+            {CUSTOMERS.map((c, i) => {
+              const healthConfig = {
+                healthy: { dot: "#059669", label: "Healthy" },
+                degraded: { dot: "#f59e0b", label: "Degraded" },
+                unhealthy: { dot: "#dc2626", label: "Unhealthy" },
+              };
+              const h = healthConfig[c.health] || healthConfig.healthy;
+              return (
+                <tr
+                  key={i}
+                  onClick={() => onSelectCustomer(c)}
+                  style={{
+                    borderBottom: "1px solid #f0f0f0", cursor: "pointer",
+                    borderLeft: c.health === "unhealthy" ? "3px solid #dc2626" : c.health === "degraded" ? "3px solid #f59e0b" : "3px solid transparent",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#fafafa"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                >
+                  <td style={{ padding: "12px", width: 32, color: "#999" }}>▸</td>
+                  <td style={{ padding: "12px", color: "#111" }}>{c.name}</td>
+                  <td style={{ padding: "12px", color: "#666", fontFamily: "monospace", fontSize: 13 }}>{c.groupRef}</td>
+                  <td style={{ padding: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: h.dot, flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: h.dot, fontWeight: 500 }}>{h.label}</span>
+                    </div>
+                    {c.totalFailures7d > 0 && (
+                      <div style={{ fontSize: 11, color: "#999", marginTop: 2, paddingLeft: 14 }}>
+                        {c.failedInstallations} of {c.installations} failing · {c.totalFailures7d} errors (7d)
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ padding: "12px", color: "#666", textAlign: "center" }}>{c.installations}</td>
+                  <td style={{ padding: "12px", color: "#666", fontFamily: "monospace", fontSize: 13 }}>{c.lastUpdated}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function CustomerDetail({ customer, onBack, onSelectInstallation }) {
+  const installs = INSTALLATIONS[customer.name] || INSTALLATIONS["Demo Org"];
+  return (
+    <div style={{ flex: 1, padding: "24px 32px", overflow: "auto" }}>
+      <div style={{ fontSize: 13, color: "#666", marginBottom: 4 }}>
+        <span style={{ cursor: "pointer", color: "#7c3aed" }} onClick={onBack}>Customers</span>
+        <span style={{ margin: "0 6px" }}>›</span>
+      </div>
+      <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 20px", color: "#111" }}>Customer: {customer.name}</h1>
+      <div style={{
+        background: "#fff", border: "1px solid #e5e5e5", borderRadius: 8, padding: "24px",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+          <h2 style={{ fontSize: 17, fontWeight: 600, margin: 0, color: "#111" }}>Customer Details</h2>
+          <span style={{ fontSize: 13, color: "#666", fontFamily: "monospace" }}>Customer Reference: {customer.groupRef} 📋</span>
+        </div>
+        <p style={{ fontSize: 14, color: "#666", margin: "0 0 16px", lineHeight: 1.5 }}>
+          View all installations for {customer.name}. Click any installation row below to see detailed information, operation logs, and configuration settings.
+        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Badge><span style={{ fontSize: 11, fontWeight: 600, color: "#888", letterSpacing: 0.5 }}>CUSTOMER NAME</span> <span style={{ fontWeight: 600 }}>{customer.name}</span></Badge>
+            <Badge><span style={{ fontSize: 11, fontWeight: 600, color: "#888", letterSpacing: 0.5 }}>TOTAL INSTALLATIONS</span> <span style={{ fontWeight: 600 }}>{installs.length}</span></Badge>
+          </div>
+          <span style={{ fontSize: 14, color: "#7c3aed", cursor: "pointer" }}>View customer data →</span>
+        </div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
+              <th style={{ width: 32 }}></th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Provider</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Integration</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Connection</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Last 7 days</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Last error</th>
+              <th style={{ width: 32 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {installs.map((inst, i) => (
+              <tr
+                key={i}
+                onClick={() => onSelectInstallation(inst)}
+                style={{
+                  borderBottom: "1px solid #f0f0f0", cursor: "pointer",
+                  borderLeft: inst.failuresLast7d > 5 ? "3px solid #dc2626" : inst.failuresLast7d > 0 ? "3px solid #f59e0b" : "3px solid transparent",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "#fafafa"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                <td style={{ padding: "12px", color: "#999" }}>▸</td>
+                <td style={{ padding: "12px" }}>
+                  <div style={{ color: "#111", fontWeight: 500 }}>{inst.provider}</div>
+                  <div style={{ color: "#888", fontSize: 12, fontFamily: "monospace" }}>{inst.integration}</div>
+                </td>
+                <td style={{ padding: "12px" }}>
+                  {inst.connection === "working" ? (
+                    <span style={{ fontSize: 12, color: "#059669", background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "2px 8px", borderRadius: 4 }}>Working</span>
+                  ) : (
+                    <span style={{ fontSize: 12, color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", padding: "2px 8px", borderRadius: 4 }}>Bad credentials</span>
+                  )}
+                </td>
+                <td style={{ padding: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 13, color: "#666" }}>{inst.recordsSynced7d} synced</span>
+                    {inst.failuresLast7d > 0 && (
+                      <span style={{
+                        fontSize: 12, fontWeight: 500,
+                        color: inst.failuresLast7d > 5 ? "#dc2626" : "#d97706",
+                        background: inst.failuresLast7d > 5 ? "#fef2f2" : "#fffbeb",
+                        border: `1px solid ${inst.failuresLast7d > 5 ? "#fecaca" : "#fde68a"}`,
+                        padding: "2px 8px", borderRadius: 4,
+                      }}>
+                        {inst.failuresLast7d} failed
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td style={{ padding: "12px" }}>
+                  {inst.lastError ? (
+                    <div>
+                      <div style={{ fontSize: 12, color: "#dc2626", fontFamily: "monospace" }}>{inst.lastError}</div>
+                      <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{inst.lastErrorTime}</div>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: 12, color: "#999" }}>—</span>
+                  )}
+                </td>
+                <td style={{ padding: "12px", color: "#999" }}>⋮</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ textAlign: "center", padding: "12px", fontSize: 13, color: "#666" }}>
+          Total Installations: {installs.length}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const LOGS = {
+  failure1: [
+    { time: "05/04/2026 09:24 PM", message: "Waiting 1 hour before trying again." },
+    { time: "05/04/2026 09:22 PM", message: 'Received 400 Bad Request response from Netsuite:\n{\n  "Message": "Invalid record reference"\n}' },
+    { time: "05/04/2026 09:00 PM", message: 'Sent POST request to https://api.netsuite.com/rest/v1/record/invoice\n{\n  "Id": "inv-4821",\n  "Customer": "Spreedly",\n  "Amount": 12500.00\n}' },
+  ],
+  failure2: [
+    { time: "05/04/2026 05:18 PM", message: "Retries exhausted. Marking operation as failed." },
+    { time: "05/04/2026 05:15 PM", message: 'Received 401 Unauthorized response from Netsuite:\n{\n  "Message": "Token expired"\n}' },
+    { time: "05/04/2026 05:00 PM", message: 'Sent GET request to https://api.netsuite.com/rest/v1/record/invoice?lastModified=2026-05-04' },
+  ],
+};
+
+function SlideOverPanel({ operation, operationIndex, onClose }) {
+  const [visible, setVisible] = useState(false);
+  const logKey = operationIndex === 1 ? "failure1" : "failure2";
+  const logs = LOGS[logKey] || [];
+
+  React.useEffect(() => {
+    requestAnimationFrame(() => setVisible(true));
+  }, []);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 250);
+  };
+
+  return (
+    <>
+      <div
+        onClick={handleClose}
+        style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.15)", zIndex: 99,
+          opacity: visible ? 1 : 0,
+          transition: "opacity 250ms ease",
+        }}
+      />
+      <div style={{
+        position: "fixed", top: 0, right: 0, bottom: 0, width: 680,
+        background: "#fff", boxShadow: "-4px 0 20px rgba(0,0,0,0.1)",
+        zIndex: 100, display: "flex", flexDirection: "column",
+        borderLeft: "1px solid #e5e5e5",
+        transform: visible ? "translateX(0)" : "translateX(100%)",
+        transition: "transform 250ms ease",
+      }}>
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid #e5e5e5" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#dc2626", marginBottom: 4 }}>Operation details</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "#111", lineHeight: 1.4 }}>
+                {operation.records} · Spreedly (spreedly-ref) · Netsuite · readAndWriteNetsuite
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12, color: "#666", fontFamily: "monospace" }}>Operation ID NNT60A9IY70VB6ND99CK</span>
+              <span style={{ cursor: "pointer", fontSize: 12, color: "#999" }}>📋</span>
+              <span onClick={handleClose} style={{ cursor: "pointer", fontSize: 20, color: "#999", marginLeft: 8 }}>✕</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: "0 24px", borderBottom: "1px solid #e5e5e5" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
+                <th style={{ textAlign: "left", padding: "8px 8px", fontWeight: 500, color: "#555", fontSize: 12 }}>Start time ↕</th>
+                <th style={{ textAlign: "left", padding: "8px 8px", fontWeight: 500, color: "#555", fontSize: 12 }}>Action ↕</th>
+                <th style={{ textAlign: "left", padding: "8px 8px", fontWeight: 500, color: "#555", fontSize: 12 }}>Status</th>
+                <th style={{ textAlign: "left", padding: "8px 8px", fontWeight: 500, color: "#555", fontSize: 12 }}>Provider ↕</th>
+                <th style={{ textAlign: "left", padding: "8px 8px", fontWeight: 500, color: "#555", fontSize: 12 }}>Integration ↕</th>
+                <th style={{ textAlign: "left", padding: "8px 8px", fontWeight: 500, color: "#555", fontSize: 12 }}>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ padding: "8px", fontFamily: "monospace", fontSize: 12, color: "#666" }}>{operation.time}</td>
+                <td style={{ padding: "8px", color: "#666" }}>{operation.action}</td>
+                <td style={{ padding: "8px", color: "#dc2626" }}>{operation.records}</td>
+                <td style={{ padding: "8px", color: "#666" }}>Netsuite</td>
+                <td style={{ padding: "8px", color: "#666" }}>readAndWriteNetsuite</td>
+                <td style={{ padding: "8px", fontFamily: "monospace", fontSize: 12, color: "#666" }}>{operation.result}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style={{ flex: 1, overflow: "auto", padding: "16px 24px" }}>
+          <div style={{ marginBottom: 12 }}>
+            <input
+              type="text" placeholder="Search"
+              style={{
+                width: "100%", padding: "8px 12px", border: "1px solid #e5e5e5",
+                borderRadius: 6, fontSize: 13, outline: "none",
+              }}
+            />
+          </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
+                <th style={{ textAlign: "left", padding: "8px", fontWeight: 500, color: "#555", fontSize: 12, whiteSpace: "nowrap" }}>Start time ↓</th>
+                <th style={{ textAlign: "left", padding: "8px", fontWeight: 500, color: "#555", fontSize: 12 }}>Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {logs.map((log, i) => (
+                <tr key={i} style={{ borderBottom: "1px solid #f0f0f0", verticalAlign: "top" }}>
+                  <td style={{ padding: "10px 8px", fontFamily: "monospace", fontSize: 12, color: "#666", whiteSpace: "nowrap" }}>{log.time}</td>
+                  <td style={{ padding: "10px 8px", fontFamily: "monospace", fontSize: 12, color: "#333", whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{log.message}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{
+            display: "flex", justifyContent: "center", alignItems: "center", gap: 8,
+            padding: "12px", fontSize: 13, color: "#666",
+          }}>
+            <span>‹</span><span>Page 1 of 10</span><span>›</span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function OperationDetail({ installation, customer, onBack, onBackToList, autoOpenOpIndex, onAutoOpenHandled }) {
+  const [activeTab, setActiveTab] = useState("All");
+  const [selectedOp, setSelectedOp] = useState(null);
+  const [selectedOpIndex, setSelectedOpIndex] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [actionFilter, setActionFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+
+  React.useEffect(() => {
+    if (autoOpenOpIndex !== null && autoOpenOpIndex !== undefined && OPERATIONS[autoOpenOpIndex]) {
+      setSelectedOp(OPERATIONS[autoOpenOpIndex]);
+      setSelectedOpIndex(autoOpenOpIndex);
+      if (onAutoOpenHandled) onAutoOpenHandled();
+    }
+  }, [autoOpenOpIndex]);
+
+  const filtered = OPERATIONS.filter(o => {
+    if (statusFilter && o.status !== statusFilter) return false;
+    if (actionFilter && o.action.toLowerCase() !== actionFilter) return false;
+    if (dateFrom) {
+      const opDate = o.time.split(" ")[0];
+      const parts = opDate.split("/");
+      const opISO = `${parts[2]}-${parts[0]}-${parts[1]}`;
+      if (opISO < dateFrom) return false;
+    }
+    if (dateTo) {
+      const opDate = o.time.split(" ")[0];
+      const parts = opDate.split("/");
+      const opISO = `${parts[2]}-${parts[0]}-${parts[1]}`;
+      if (opISO > dateTo) return false;
+    }
+    return true;
+  });
+
+  const handleSearch = (q) => {
+    setSearchQuery(q);
+    if (q.length < 2) { setSearchResults(null); return; }
+    const lower = q.toLowerCase();
+    const matches = OPERATIONS.filter(o => o.searchContent.toLowerCase().includes(lower)).map(o => {
+      const idx = o.searchContent.toLowerCase().indexOf(lower);
+      const start = Math.max(0, idx - 20);
+      const end = Math.min(o.searchContent.length, idx + q.length + 30);
+      const snippet = (start > 0 ? "..." : "") + o.searchContent.slice(start, end) + (end < o.searchContent.length ? "..." : "");
+      return { ...o, matchSnippet: snippet, matchStart: idx - start + (start > 0 ? 3 : 0), matchLen: q.length };
+    });
+    setSearchResults(matches);
+  };
+
+  const barData = [45, 62, 55, 78, 38, 50, 72];
+  const displayOps = searchResults !== null ? searchResults : filtered;
+  const hasActiveFilters = statusFilter || actionFilter || dateFrom || dateTo;
+
+  return (
+    <div style={{ flex: 1, padding: "24px 32px", overflow: "auto" }}>
+      <div style={{ fontSize: 13, color: "#666", marginBottom: 4 }}>
+        <span style={{ cursor: "pointer", color: "#7c3aed" }} onClick={onBackToList}>Customers</span>
+        <span style={{ margin: "0 6px" }}>›</span>
+        <span style={{ cursor: "pointer", color: "#7c3aed" }} onClick={onBack}>{customer.name} {customer.groupRef}</span>
+        <span style={{ margin: "0 6px" }}>›</span>
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600, margin: 0, color: "#111" }}>
+          {installation.provider} {installation.integration}
+        </h1>
+        <span style={{ fontSize: 13, color: "#666", fontFamily: "monospace" }}>
+          Installation ID {installation.installationId} 📋
+        </span>
+      </div>
+
+      <div style={{
+        background: "#fff", border: "1px solid #e5e5e5", borderRadius: 8,
+        padding: "20px 24px", marginBottom: 20,
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <span style={{ fontSize: 13, color: "#666" }}>Number of records synced</span>
+          <div style={{ display: "flex", gap: 12, fontSize: 13 }}>
+            <span style={{ color: "#999" }}>1 day</span>
+            <span style={{ color: "#7c3aed", fontWeight: 500 }}>7 days</span>
+            <span style={{ color: "#999" }}>1 month</span>
+          </div>
+        </div>
+        <div style={{ fontSize: 28, fontWeight: 600, color: "#111", marginBottom: 16 }}>382</div>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 80 }}>
+          {barData.map((h, i) => (
+            <div key={i} style={{
+              flex: 1, height: `${h}%`, background: "#e8e4f0", borderRadius: 3,
+            }} />
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#999", marginTop: 4 }}>
+          <span>7 days ago</span><span>Today</span>
+        </div>
+      </div>
+
+      <div style={{
+        background: "#fff", border: "1px solid #e5e5e5", borderRadius: 8, padding: "20px 24px",
+      }}>
+        {/* Filter bar */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
+          <SelectFilter value={statusFilter} onChange={setStatusFilter} label="Status" options={[
+            { value: "success", label: "Success" }, { value: "failure", label: "Failure" },
+          ]} />
+          <SelectFilter value={actionFilter} onChange={setActionFilter} label="Action" options={[
+            { value: "read", label: "Read" }, { value: "write", label: "Write" }, { value: "subscribe", label: "Subscribe" },
+          ]} />
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontSize: 12, color: "#888" }}>From</span>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              style={{ padding: "5px 8px", border: "1px solid #e5e5e5", borderRadius: 6, fontSize: 13, outline: "none" }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontSize: 12, color: "#888" }}>To</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+              style={{ padding: "5px 8px", border: "1px solid #e5e5e5", borderRadius: 6, fontSize: 13, outline: "none" }} />
+          </div>
+          {hasActiveFilters && (
+            <button onClick={() => { setStatusFilter(""); setActionFilter(""); setDateFrom(""); setDateTo(""); }}
+              style={{ padding: "5px 12px", border: "none", borderRadius: 6, fontSize: 12, color: "#7c3aed", background: "#f3f0ff", cursor: "pointer" }}>
+              Clear filters
+            </button>
+          )}
+          <div style={{ marginLeft: "auto", position: "relative" }}>
+            <input
+              type="text" placeholder="Search operations"
+              value={searchQuery}
+              onChange={e => handleSearch(e.target.value)}
+              style={{
+                padding: "6px 12px", border: "1px solid #e5e5e5", borderRadius: 6,
+                fontSize: 13, outline: "none", width: 280,
+                borderColor: searchResults !== null ? "#7c3aed" : "#e5e5e5",
+              }}
+            />
+            {searchResults !== null && (
+              <button onClick={() => { setSearchQuery(""); setSearchResults(null); }}
+                style={{ position: "absolute", right: 8, top: 7, border: "none", background: "none", color: "#999", cursor: "pointer", fontSize: 14 }}>✕</button>
+            )}
+          </div>
+        </div>
+
+        {/* Results summary */}
+        {(searchResults !== null || hasActiveFilters) && (
+          <div style={{ fontSize: 12, color: "#888", marginBottom: 12, padding: "6px 10px", background: "#f9f9f9", borderRadius: 4 }}>
+            {searchResults !== null
+              ? <>Showing {searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for "<span style={{ fontWeight: 500, color: "#7c3aed" }}>{searchQuery}</span>"</>
+              : <>Showing {filtered.length} of {OPERATIONS.length} operations</>
+            }
+          </div>
+        )}
+
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Start time ↕</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Action ↕</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Status ↕</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Result</th>
+              {searchResults !== null && (
+                <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Match</th>
+              )}
+              <th style={{ width: 32 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayOps.map((op, i) => (
+              <tr
+                key={i}
+                style={{ borderBottom: "1px solid #f0f0f0", cursor: "pointer" }}
+                onClick={() => { setSelectedOp(op); setSelectedOpIndex(OPERATIONS.indexOf(op)); }}
+                onMouseEnter={e => e.currentTarget.style.background = "#fafafa"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                <td style={{ padding: "12px", color: "#666", fontFamily: "monospace", fontSize: 13 }}>{op.time}</td>
+                <td style={{ padding: "12px", color: "#666" }}>{op.action}</td>
+                <td style={{ padding: "12px", color: op.status === "failure" ? "#dc2626" : "#059669" }}>{op.records}</td>
+                <td style={{ padding: "12px", color: "#666", fontFamily: "monospace", fontSize: 13 }}>{op.result}</td>
+                {searchResults !== null && op.matchSnippet && (
+                  <td style={{ padding: "12px" }}>
+                    <span style={{ fontSize: 12, fontFamily: "monospace", color: "#666", background: "#fffbeb", padding: "2px 6px", borderRadius: 3, border: "1px solid #fde68a" }}>
+                      {op.matchSnippet.slice(0, op.matchStart)}
+                      <span style={{ background: "#fde68a", fontWeight: 500, color: "#92400e" }}>{op.matchSnippet.slice(op.matchStart, op.matchStart + op.matchLen)}</span>
+                      {op.matchSnippet.slice(op.matchStart + op.matchLen)}
+                    </span>
+                  </td>
+                )}
+                <td style={{ padding: "12px", color: "#999" }}>⋮</td>
+              </tr>
+            ))}
+            {displayOps.length === 0 && (
+              <tr><td colSpan={searchResults !== null ? 6 : 5} style={{ padding: 24, textAlign: "center", color: "#999", fontSize: 13 }}>No operations match your filters</td></tr>
+            )}
+          </tbody>
+        </table>
+        <div style={{
+          display: "flex", justifyContent: "center", alignItems: "center", gap: 8,
+          padding: "12px", fontSize: 13, color: "#666",
+        }}>
+          <span style={{ cursor: "pointer" }}>‹</span>
+          <span>Page 1 of {searchResults !== null ? 1 : 3}</span>
+          <span style={{ cursor: "pointer" }}>›</span>
+        </div>
+      </div>
+      {selectedOp && (
+        <SlideOverPanel
+          operation={selectedOp}
+          operationIndex={selectedOpIndex}
+          onClose={() => { setSelectedOp(null); setSelectedOpIndex(null); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function AlertsPage({ onAlertClick }) {
+  const [filter, setFilter] = useState("");
+  const [acknowledged, setAcknowledged] = useState({});
+
+  const filtered = ALERTS.filter(a => {
+    if (filter && a.severity !== filter) return false;
+    return true;
+  });
+
+  const severityStyle = {
+    critical: { bg: "#fef2f2", border: "#fecaca", dot: "#dc2626", label: "Critical" },
+    warning: { bg: "#fffbeb", border: "#fde68a", dot: "#f59e0b", label: "Warning" },
+    info: { bg: "#f0f9ff", border: "#bae6fd", dot: "#0284c7", label: "Info" },
+  };
+
+  const criticalCount = ALERTS.filter(a => a.severity === "critical" && !a.acknowledged).length;
+  const warningCount = ALERTS.filter(a => a.severity === "warning" && !a.acknowledged).length;
+
+  return (
+    <div style={{ flex: 1, padding: "24px 32px", overflow: "auto" }}>
+      <h1 style={{ fontSize: 20, fontWeight: 600, margin: "0 0 20px", color: "#111" }}>Alerts</h1>
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+        <div style={{ flex: 1, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, padding: "16px 20px" }}>
+          <div style={{ fontSize: 12, color: "#991b1b", fontWeight: 500, marginBottom: 4 }}>Critical</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: "#dc2626" }}>{criticalCount}</div>
+          <div style={{ fontSize: 12, color: "#991b1b" }}>unacknowledged</div>
+        </div>
+        <div style={{ flex: 1, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8, padding: "16px 20px" }}>
+          <div style={{ fontSize: 12, color: "#92400e", fontWeight: 500, marginBottom: 4 }}>Warning</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: "#f59e0b" }}>{warningCount}</div>
+          <div style={{ fontSize: 12, color: "#92400e" }}>unacknowledged</div>
+        </div>
+        <div style={{ flex: 1, background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 8, padding: "16px 20px" }}>
+          <div style={{ fontSize: 12, color: "#075985", fontWeight: 500, marginBottom: 4 }}>Total alerts (7d)</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: "#0284c7" }}>{ALERTS.length}</div>
+          <div style={{ fontSize: 12, color: "#075985" }}>across all installations</div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        {["", "critical", "warning", "info"].map(f => (
+          <button key={f} onClick={() => setFilter(f)} style={{
+            padding: "6px 16px", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 13, fontWeight: 500,
+            background: filter === f ? "#f3f0ff" : "transparent",
+            color: filter === f ? "#7c3aed" : "#666",
+          }}>
+            {f === "" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {filtered.map(alert => {
+          const s = severityStyle[alert.severity];
+          const isAck = acknowledged[alert.id] || alert.acknowledged;
+          return (
+            <div key={alert.id} style={{
+              background: "#fff", border: `1px solid ${isAck ? "#e5e5e5" : s.border}`,
+              borderLeft: `3px solid ${s.dot}`, borderRadius: 8, padding: "16px 20px",
+              opacity: isAck ? 0.6 : 1,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: s.dot }} />
+                  <span style={{ fontSize: 12, fontWeight: 500, color: s.dot, textTransform: "uppercase" }}>{s.label}</span>
+                  <span style={{ fontSize: 12, color: "#999" }}>·</span>
+                  <span style={{ fontSize: 12, color: "#999" }}>{alert.type}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "#999", fontFamily: "monospace" }}>{alert.time}</span>
+                  {!isAck && (
+                    <button onClick={() => setAcknowledged(p => ({ ...p, [alert.id]: true }))}
+                      style={{ padding: "3px 10px", border: "1px solid #e5e5e5", borderRadius: 4, fontSize: 11, color: "#666", background: "#fff", cursor: "pointer" }}>
+                      Acknowledge
+                    </button>
+                  )}
+                  {isAck && <span style={{ fontSize: 11, color: "#999" }}>Acknowledged</span>}
+                </div>
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 500, color: "#111", marginBottom: 4 }}>{alert.title}</div>
+              <div style={{ fontSize: 13, color: "#666", lineHeight: 1.5, marginBottom: 8 }}>{alert.message}</div>
+              <div style={{ display: "flex", gap: 12, fontSize: 12, color: "#888", alignItems: "center" }}>
+                <span>Customer: <span style={{ color: "#444", fontWeight: 500 }}>{alert.customer}</span></span>
+                <span>Provider: <span style={{ color: "#444", fontWeight: 500 }}>{alert.provider}</span></span>
+                <span style={{ marginLeft: "auto" }}>
+                  <button onClick={() => onAlertClick(alert)}
+                    style={{ padding: "4px 12px", border: "1px solid #7c3aed", borderRadius: 4, fontSize: 12, color: "#7c3aed", background: "#f9f5ff", cursor: "pointer", fontWeight: 500 }}>
+                    View details →
+                  </button>
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [view, setView] = useState("list");
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedInstallation, setSelectedInstallation] = useState(null);
+
+  const [autoOpenOpIndex, setAutoOpenOpIndex] = useState(null);
+
+  const activeNav = view === "alerts" ? "alerts" : "customers";
+
+  const handleNavigate = (id) => {
+    if (id === "alerts") {
+      setView("alerts");
+      setSelectedCustomer(null);
+      setSelectedInstallation(null);
+      setAutoOpenOpIndex(null);
+    } else if (id === "customers") {
+      setView("list");
+      setSelectedCustomer(null);
+      setSelectedInstallation(null);
+      setAutoOpenOpIndex(null);
+    }
+  };
+
+  const handleAlertClick = (alert) => {
+    const customer = CUSTOMERS.find(c => c.groupRef === alert.customerRef);
+    if (!customer) return;
+    const installs = INSTALLATIONS[customer.name] || INSTALLATIONS["Demo Org"];
+    const installation = installs[alert.installationIdx];
+    if (!installation) return;
+    setSelectedCustomer(customer);
+    setSelectedInstallation(installation);
+    setAutoOpenOpIndex(alert.operationIdx);
+    setView("operations");
+  };
+
+  return (
+    <div style={{ display: "flex", height: "100vh", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", background: "#f8f8f8" }}>
+      <Sidebar active={activeNav} onNavigate={handleNavigate} />
+      {view === "alerts" && <AlertsPage onAlertClick={handleAlertClick} />}
+      {view === "list" && (
+        <CustomersList onSelectCustomer={c => { setSelectedCustomer(c); setView("detail"); }} />
+      )}
+      {view === "detail" && selectedCustomer && (
+        <CustomerDetail
+          customer={selectedCustomer}
+          onBack={() => { setView("list"); setSelectedCustomer(null); }}
+          onSelectInstallation={inst => { setSelectedInstallation(inst); setView("operations"); }}
+        />
+      )}
+      {view === "operations" && selectedInstallation && (
+        <OperationDetail
+          installation={selectedInstallation}
+          customer={selectedCustomer}
+          onBack={() => setView("detail")}
+          onBackToList={() => { setView("list"); setSelectedCustomer(null); setSelectedInstallation(null); }}
+          autoOpenOpIndex={autoOpenOpIndex}
+          onAutoOpenHandled={() => setAutoOpenOpIndex(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
