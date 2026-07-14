@@ -36,7 +36,6 @@ Single-file HTML, React 18 + Babel via CDN, no build step. State and demo data a
 - Vite + TypeScript, components split into files, data layer extracted
 - Mock the proposed endpoints with MSW returning the JSON shapes from the exercise brief, rather than filtering flat arrays in-component
 - Tests on the filter and search logic
-- Fix a known quirk in `SlideOverPanel` where log fixtures are keyed off op index — any non-index-1 op currently shows the same failure logs
 
 ## Data model
 

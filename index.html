@@ -41,17 +41,17 @@ const INSTALLATIONS = {
 
 const OPERATIONS = [
   { time: "05/04/2026 10:00:00 PM", action: "Read", status: "success", records: "78 records synced", result: "200 OK", searchContent: "invoice inv-5012 Spreedly Technology 200 OK" },
-  { time: "05/04/2026 09:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "400 bad request", searchContent: "invoice inv-4821 Spreedly 400 Bad Request Invalid record reference" },
+  { time: "05/04/2026 09:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "400 bad request", searchContent: "invoice inv-4821 Spreedly 400 Bad Request Invalid record reference", logKey: "netsuite_400_invalid" },
   { time: "05/04/2026 08:00:00 PM", action: "Read", status: "success", records: "28 records synced", result: "200 OK", searchContent: "invoice inv-4800 Airbnb Technology 200 OK" },
   { time: "05/04/2026 07:00:00 PM", action: "Read", status: "success", records: "2 records synced", result: "200 OK", searchContent: "invoice inv-4799 Stripe Financial 200 OK" },
   { time: "05/04/2026 06:00:00 PM", action: "Read", status: "success", records: "32 records synced", result: "200 OK", searchContent: "invoice inv-4750 Plaid Banking 200 OK" },
-  { time: "05/04/2026 05:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "401 unauthorized", searchContent: "invoice inv-4700 401 Unauthorized Token expired" },
+  { time: "05/04/2026 05:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "401 unauthorized", searchContent: "invoice inv-4700 401 Unauthorized Token expired", logKey: "hubspot_401_token" },
   { time: "05/04/2026 04:00:00 PM", action: "Read", status: "success", records: "17 records synced", result: "200 OK", searchContent: "invoice inv-4650 Ramp Corporate 200 OK" },
   { time: "05/04/2026 03:00:00 PM", action: "Read", status: "success", records: "14 records synced", result: "200 OK", searchContent: "invoice inv-4600 Brex Financial 200 OK" },
   { time: "05/03/2026 11:00:00 PM", action: "Read", status: "success", records: "45 records synced", result: "200 OK", searchContent: "invoice inv-4550 Gusto Payroll 200 OK" },
-  { time: "05/03/2026 09:00:00 PM", action: "Write", status: "failure", records: "Failure, 0 records synced", result: "400 bad request", searchContent: "invoice inv-4821 Spreedly 400 Bad Request duplicate record" },
+  { time: "05/03/2026 09:00:00 PM", action: "Write", status: "failure", records: "Failure, 0 records synced", result: "400 bad request", searchContent: "invoice inv-4821 Spreedly 400 Bad Request duplicate record", logKey: "netsuite_400_duplicate" },
   { time: "05/02/2026 10:00:00 AM", action: "Read", status: "success", records: "22 records synced", result: "200 OK", searchContent: "invoice inv-4500 Deel HR 200 OK" },
-  { time: "05/01/2026 03:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "429 too many requests", searchContent: "429 Too Many Requests API limit exceeded" },
+  { time: "05/01/2026 03:00:00 PM", action: "Read", status: "failure", records: "Failure, 0 records synced", result: "429 too many requests", searchContent: "429 Too Many Requests API limit exceeded", logKey: "salesforce_429_ratelimit" },
 ];
 
 const ALERTS = [
@@ -355,22 +355,35 @@ function CustomerDetail({ customer, onBack, onSelectInstallation, onSelectError 
 }
 
 const LOGS = {
-  failure1: [
+  netsuite_400_invalid: [
     { time: "05/04/2026 09:24 PM", message: "Waiting 1 hour before trying again." },
     { time: "05/04/2026 09:22 PM", message: 'Received 400 Bad Request response from Netsuite:\n{\n  "Message": "Invalid record reference"\n}' },
     { time: "05/04/2026 09:00 PM", message: 'Sent POST request to https://api.netsuite.com/rest/v1/record/invoice\n{\n  "Id": "inv-4821",\n  "Customer": "Spreedly",\n  "Amount": 12500.00\n}' },
   ],
-  failure2: [
+  hubspot_401_token: [
     { time: "05/04/2026 05:18 PM", message: "Retries exhausted. Marking operation as failed." },
-    { time: "05/04/2026 05:15 PM", message: 'Received 401 Unauthorized response from Netsuite:\n{\n  "Message": "Token expired"\n}' },
-    { time: "05/04/2026 05:00 PM", message: 'Sent GET request to https://api.netsuite.com/rest/v1/record/invoice?lastModified=2026-05-04' },
+    { time: "05/04/2026 05:15 PM", message: 'Received 401 Unauthorized response from Hubspot:\n{\n  "status": "error",\n  "message": "Authentication credentials expired"\n}' },
+    { time: "05/04/2026 05:00 PM", message: 'Sent GET request to https://api.hubapi.com/crm/v3/objects/contacts?updatedAfter=2026-05-04' },
+  ],
+  netsuite_400_duplicate: [
+    { time: "05/03/2026 09:03 PM", message: "Retries exhausted. Marking operation as failed." },
+    { time: "05/03/2026 09:01 PM", message: 'Received 400 Bad Request response from Netsuite:\n{\n  "Message": "Duplicate record: invoice inv-4821 already exists"\n}' },
+    { time: "05/03/2026 09:00 PM", message: 'Sent POST request to https://api.netsuite.com/rest/v1/record/invoice\n{\n  "Id": "inv-4821",\n  "Customer": "Spreedly",\n  "Amount": 12500.00\n}' },
+  ],
+  salesforce_429_ratelimit: [
+    { time: "05/01/2026 03:03 PM", message: "Waiting 30 minutes before trying again (exponential backoff)." },
+    { time: "05/01/2026 03:01 PM", message: 'Received 429 Too Many Requests response from Salesforce:\n{\n  "message": "REQUEST_LIMIT_EXCEEDED",\n  "errorCode": "REQUEST_LIMIT_EXCEEDED"\n}' },
+    { time: "05/01/2026 03:00 PM", message: 'Sent GET request to https://api.salesforce.com/services/data/v58.0/query?q=SELECT+Id+FROM+Contact+WHERE+LastModifiedDate>=2026-05-01' },
   ],
 };
 
-function SlideOverPanel({ operation, operationIndex, onClose }) {
+function SlideOverPanel({ operation, customer, installation, onClose }) {
   const [visible, setVisible] = useState(false);
-  const logKey = operationIndex === 1 ? "failure1" : "failure2";
-  const logs = LOGS[logKey] || [];
+  const isFailure = operation.status === "failure";
+  const logs = operation.logKey ? LOGS[operation.logKey] : [
+    { time: operation.time, message: `Received ${operation.result}. ${operation.records}.` },
+    { time: operation.time, message: `Sent ${operation.action.toLowerCase()} request to ${installation.provider} endpoint.` },
+  ];
 
   React.useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
@@ -403,9 +416,9 @@ function SlideOverPanel({ operation, operationIndex, onClose }) {
         <div style={{ padding: "20px 24px", borderBottom: "1px solid #e5e5e5" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#dc2626", marginBottom: 4 }}>Operation details</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: isFailure ? "#dc2626" : "#059669", marginBottom: 4 }}>Operation details</div>
               <div style={{ fontSize: 15, fontWeight: 600, color: "#111", lineHeight: 1.4 }}>
-                {operation.records} · Spreedly (spreedly-ref) · Netsuite · readAndWriteNetsuite
+                {customer.name} ({customer.groupRef}) · {installation.provider} · {installation.integration}
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -431,9 +444,9 @@ function SlideOverPanel({ operation, operationIndex, onClose }) {
               <tr>
                 <td style={{ padding: "8px", fontFamily: "monospace", fontSize: 12, color: "#666" }}>{operation.time}</td>
                 <td style={{ padding: "8px", color: "#666" }}>{operation.action}</td>
-                <td style={{ padding: "8px", color: "#dc2626" }}>{operation.records}</td>
-                <td style={{ padding: "8px", color: "#666" }}>Netsuite</td>
-                <td style={{ padding: "8px", color: "#666" }}>readAndWriteNetsuite</td>
+                <td style={{ padding: "8px", color: isFailure ? "#dc2626" : "#059669" }}>{operation.records}</td>
+                <td style={{ padding: "8px", color: "#666" }}>{installation.provider}</td>
+                <td style={{ padding: "8px", color: "#666" }}>{installation.integration}</td>
                 <td style={{ padding: "8px", fontFamily: "monospace", fontSize: 12, color: "#666" }}>{operation.result}</td>
               </tr>
             </tbody>
@@ -684,7 +697,8 @@ function OperationDetail({ installation, customer, onBack, onBackToList, autoOpe
       {selectedOp && (
         <SlideOverPanel
           operation={selectedOp}
-          operationIndex={selectedOpIndex}
+          customer={customer}
+          installation={installation}
           onClose={() => { setSelectedOp(null); setSelectedOpIndex(null); }}
         />
       )}
