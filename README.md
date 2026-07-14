@@ -6,16 +6,18 @@ An interactive React prototype exploring how [Ampersand's](https://www.withamper
 
 Live: https://garwalsh.github.io/ampersand-dashboard-prototype/
 
-Walkthrough video: https://youtu.be/toYYeHjPhsM
+Walkthrough video: https://youtu.be/toYYeHjPhsM (recorded at v0.1.0; the live demo is v0.2.0)
 
 Or open `index.html` locally.
+
+Change history: [CHANGELOG.md](CHANGELOG.md)
 
 ## What's in the prototype
 
 **Task 1 — better troubleshooting from existing API data**
 
 - Health column on the customers list (Healthy / Degraded / Unhealthy) with a one-line failure summary
-- Inline error context on installation rows: connection status, a 7-day operations health bar (success + failure counts), last error message with timestamp
+- Inline error context on installation rows: connection status, a 7-day operations health bar (success + failure counts), most recent error — click it to jump straight to the failed operation
 
 **Task 2 — proposed new endpoints, wired into the UI**
 
@@ -23,7 +25,7 @@ Or open `index.html` locally.
 - Full-text operation search with match highlighting
 - Project-level alert feed (sidebar tab with unacknowledged badge, severity tiles), where each alert deep-links to the exact operation
 
-**Suggested walkthrough:** Customers → Spreedly → Netsuite hits most of the surfaces at once. Alerts → "View details →" demonstrates the cross-page deep-link.
+**Suggested walkthrough:** Customers → Spreedly → Netsuite hits most of the surfaces at once. Click any row's most recent error (or "View details →" from an alert) to deep-link into the specific failed operation with its request/response log.
 
 ## Technical approach
 
@@ -42,6 +44,6 @@ Single-file HTML, React 18 + Babel via CDN, no build step. State and demo data a
 All demo data lives at the top of `index.html`:
 
 - `CUSTOMERS` — six orgs; Spreedly is the intentionally unhealthy scenario
-- `INSTALLATIONS` — keyed by customer name; only Spreedly and Demo Org have entries
+- `INSTALLATIONS` — keyed by customer name; only Spreedly and Crunchbase have entries
 - `OPERATIONS` — flat array; each row has a `searchContent` string that powers the fake full-text index
 - `ALERTS` — each carries `customerRef` + `installationIdx` + `operationIdx` so "View details →" can jump into the right operation
