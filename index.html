@@ -29,13 +29,13 @@ const CUSTOMERS = [
 
 const INSTALLATIONS = {
   "Spreedly": [
-    { provider: "Netsuite", integration: "readAndWriteNetsuite", installationId: "a82ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Failure", created: "Apr 10, 2026, 02:15:00 PM", connection: "working", failuresLast7d: 12, lastError: "400 Bad Request — Invalid record reference", lastErrorTime: "May 4, 10:22 PM", recordsSynced7d: 156 },
-    { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Success", created: "Mar 22, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 0, lastError: null, lastErrorTime: null, recordsSynced7d: 842 },
-    { provider: "Hubspot", integration: "readContacts", installationId: "f29d1a3b-88cd-4e12-b3a1-7890abcdef12", lastStatus: "Success", created: "Feb 15, 2026, 10:30:00 AM", connection: "bad_credentials", failuresLast7d: 47, lastError: "401 Unauthorized — Token expired", lastErrorTime: "May 4, 8:00 AM", recordsSynced7d: 0 },
+    { provider: "Netsuite", integration: "readAndWriteNetsuite", installationId: "a82ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Failure", created: "Apr 10, 2026, 02:15:00 PM", connection: "working", failuresLast7d: 12, lastError: "400 Bad Request — Invalid record reference", lastErrorTime: "May 4, 10:22 PM", successfulOps7d: 156 },
+    { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Success", created: "Mar 22, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 0, lastError: null, lastErrorTime: null, successfulOps7d: 842 },
+    { provider: "Hubspot", integration: "readContacts", installationId: "f29d1a3b-88cd-4e12-b3a1-7890abcdef12", lastStatus: "Success", created: "Feb 15, 2026, 10:30:00 AM", connection: "bad_credentials", failuresLast7d: 47, lastError: "401 Unauthorized — Token expired", lastErrorTime: "May 4, 8:00 AM", successfulOps7d: 0 },
   ],
   "Demo Org": [
-    { provider: "Fathom", integration: "readAndWriteFathom", installationId: "992ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Success", created: "Jun 12, 2026, 10:47:14 PM", connection: "working", failuresLast7d: 0, lastError: null, lastErrorTime: null, recordsSynced7d: 382 },
-    { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Unknown", created: "Jun 17, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 1, lastError: "429 Too Many Requests — API limit exceeded", lastErrorTime: "Jun 16, 2:22 PM", recordsSynced7d: 270 },
+    { provider: "Fathom", integration: "readAndWriteFathom", installationId: "992ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Success", created: "Jun 12, 2026, 10:47:14 PM", connection: "working", failuresLast7d: 0, lastError: null, lastErrorTime: null, successfulOps7d: 382 },
+    { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Unknown", created: "Jun 17, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 1, lastError: "429 Too Many Requests — API limit exceeded", lastErrorTime: "Jun 16, 2:22 PM", successfulOps7d: 270 },
   ],
 };
 
@@ -268,11 +268,10 @@ function CustomerDetail({ customer, onBack, onSelectInstallation }) {
           <thead>
             <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
               <th style={{ width: 32 }}></th>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Provider</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Integration</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Connection</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Last 7 days</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Last error</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Status</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13, minWidth: 220 }}>Operations (7 days)</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Errors (7 days)</th>
               <th style={{ width: 32 }}></th>
             </tr>
           </thead>
@@ -300,21 +299,32 @@ function CustomerDetail({ customer, onBack, onSelectInstallation }) {
                     <span style={{ fontSize: 12, color: "#dc2626", background: "#fef2f2", border: "1px solid #fecaca", padding: "2px 8px", borderRadius: 4 }}>Bad credentials</span>
                   )}
                 </td>
-                <td style={{ padding: "12px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 13, color: "#666" }}>{inst.recordsSynced7d} synced</span>
-                    {inst.failuresLast7d > 0 && (
-                      <span style={{
-                        fontSize: 12, fontWeight: 500,
-                        color: inst.failuresLast7d > 5 ? "#dc2626" : "#d97706",
-                        background: inst.failuresLast7d > 5 ? "#fef2f2" : "#fffbeb",
-                        border: `1px solid ${inst.failuresLast7d > 5 ? "#fecaca" : "#fde68a"}`,
-                        padding: "2px 8px", borderRadius: 4,
-                      }}>
-                        {inst.failuresLast7d} failed
-                      </span>
-                    )}
-                  </div>
+                <td style={{ padding: "12px", minWidth: 220 }}>
+                  {(() => {
+                    const success = inst.successfulOps7d;
+                    const failed = inst.failuresLast7d;
+                    const total = success + failed;
+                    const successPct = total > 0 ? (success / total) * 100 : 0;
+                    return (
+                      <>
+                        <div style={{ display: "flex", height: 9, borderRadius: 5, overflow: "hidden", background: "#eef0f2" }}>
+                          <div style={{ width: `${successPct}%`, background: "#12b76a" }} />
+                          <div style={{ width: `${100 - successPct}%`, background: "#f04438" }} />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 12, color: "#667085" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#12b76a" }} />
+                            <span style={{ color: "#344054", fontWeight: 500 }}>{success}</span> successful
+                          </span>
+                          <span style={{ color: "#d0d5dd" }}>·</span>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#f04438" }} />
+                            <span style={{ color: "#344054", fontWeight: 500 }}>{failed}</span> failed
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </td>
                 <td style={{ padding: "12px" }}>
                   {inst.lastError ? (

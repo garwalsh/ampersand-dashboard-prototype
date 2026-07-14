@@ -15,7 +15,7 @@ Or open `index.html` locally.
 **Task 1 — better troubleshooting from existing API data**
 
 - Health column on the customers list (Healthy / Degraded / Unhealthy) with a one-line failure summary
-- Inline error context on installation rows: connection status, 7-day sync + failure counts, last error message with timestamp
+- Inline error context on installation rows: connection status, a 7-day operations health bar (success + failure counts), last error message with timestamp
 
 **Task 2 — proposed new endpoints, wired into the UI**
 
