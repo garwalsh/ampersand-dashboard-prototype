@@ -19,7 +19,7 @@ body { overflow: hidden; }
 const { useState, useEffect } = React;
 
 const CUSTOMERS = [
-  { name: "Demo Org", groupRef: "g2-ref", installations: 2, lastUpdated: "Jun 17, 2026, 06:21:08 PM", health: "degraded", failedInstallations: 1, totalFailures7d: 1 },
+  { name: "Crunchbase", groupRef: "crunchbase-ref", installations: 2, lastUpdated: "Jun 17, 2026, 06:21:08 PM", health: "degraded", failedInstallations: 1, totalFailures7d: 21 },
   { name: "Loom", groupRef: "loom-ref", installations: 2, lastUpdated: "Jun 12, 2026, 08:44:51 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
   { name: "Linear", groupRef: "linear-ref", installations: 1, lastUpdated: "May 26, 2026, 03:23:44 PM", health: "healthy", failedInstallations: 0, totalFailures7d: 0 },
   { name: "Spreedly", groupRef: "spreedly-ref", installations: 3, lastUpdated: "May 4, 2026, 11:15:22 AM", health: "unhealthy", failedInstallations: 2, totalFailures7d: 59 },
@@ -29,13 +29,13 @@ const CUSTOMERS = [
 
 const INSTALLATIONS = {
   "Spreedly": [
-    { provider: "Netsuite", integration: "readAndWriteNetsuite", installationId: "a82ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Failure", created: "Apr 10, 2026, 02:15:00 PM", connection: "working", failuresLast7d: 12, lastError: "400 Bad Request — Invalid record reference", lastErrorTime: "May 4, 10:22 PM", successfulOps7d: 156 },
+    { provider: "Netsuite", integration: "readAndWriteNetsuite", installationId: "a82ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Failure", created: "Apr 10, 2026, 02:15:00 PM", connection: "working", failuresLast7d: 12, lastError: "400 Bad Request — Invalid record reference", lastErrorTime: "May 4, 10:22 PM", errorOperationIdx: 1, successfulOps7d: 156 },
     { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Success", created: "Mar 22, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 0, lastError: null, lastErrorTime: null, successfulOps7d: 842 },
-    { provider: "Hubspot", integration: "readContacts", installationId: "f29d1a3b-88cd-4e12-b3a1-7890abcdef12", lastStatus: "Success", created: "Feb 15, 2026, 10:30:00 AM", connection: "bad_credentials", failuresLast7d: 47, lastError: "401 Unauthorized — Token expired", lastErrorTime: "May 4, 8:00 AM", successfulOps7d: 0 },
+    { provider: "Hubspot", integration: "readContacts", installationId: "f29d1a3b-88cd-4e12-b3a1-7890abcdef12", lastStatus: "Success", created: "Feb 15, 2026, 10:30:00 AM", connection: "bad_credentials", failuresLast7d: 47, lastError: "401 Unauthorized — Token expired", lastErrorTime: "May 4, 8:00 AM", errorOperationIdx: 5, successfulOps7d: 0 },
   ],
-  "Demo Org": [
+  "Crunchbase": [
     { provider: "Fathom", integration: "readAndWriteFathom", installationId: "992ed72f-0300-49bc-9019-09d6bc89ee0a", lastStatus: "Success", created: "Jun 12, 2026, 10:47:14 PM", connection: "working", failuresLast7d: 0, lastError: null, lastErrorTime: null, successfulOps7d: 382 },
-    { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Unknown", created: "Jun 17, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 1, lastError: "429 Too Many Requests — API limit exceeded", lastErrorTime: "Jun 16, 2:22 PM", successfulOps7d: 270 },
+    { provider: "Salesforce", integration: "readAndSubscribe", installationId: "d18c988a-76ad-419e-9fe7-c20014b0505f", lastStatus: "Unknown", created: "Jun 17, 2026, 06:21:08 PM", connection: "working", failuresLast7d: 21, lastError: "429 Too Many Requests — API limit exceeded", lastErrorTime: "Jun 16, 2:22 PM", errorOperationIdx: 11, successfulOps7d: 250 },
   ],
 };
 
@@ -57,9 +57,9 @@ const OPERATIONS = [
 const ALERTS = [
   { id: "alert-1", severity: "critical", type: "connection.credentials_expired", title: "Hubspot credentials expired for Spreedly", message: "OAuth token for Spreedly's Hubspot integration (readContacts) expired. No records synced since May 4, 8:00 AM UTC. End customer needs to re-authenticate.", customer: "Spreedly", provider: "Hubspot", time: "May 4, 2026, 8:00 AM", acknowledged: false, customerRef: "spreedly-ref", installationIdx: 2, operationIdx: null },
   { id: "alert-2", severity: "critical", type: "operation.repeated_failures", title: "Netsuite read failing repeatedly for Spreedly", message: "12 consecutive read failures in the last 24 hours. Most recent error: 400 Bad Request — Invalid record reference.", customer: "Spreedly", provider: "Netsuite", time: "May 4, 2026, 10:22 PM", acknowledged: false, customerRef: "spreedly-ref", installationIdx: 0, operationIdx: 1 },
-  { id: "alert-3", severity: "warning", type: "operation.failure", title: "Salesforce API rate limit hit for Demo Org", message: "1 read failure for Demo Org's Salesforce integration. Error: 429 Too Many Requests — API limit exceeded. Next retry scheduled.", customer: "Demo Org", provider: "Salesforce", time: "Jun 16, 2026, 2:22 PM", acknowledged: false, customerRef: "g2-ref", installationIdx: 1, operationIdx: 11 },
+  { id: "alert-3", severity: "warning", type: "operation.repeated_failures", title: "Salesforce API rate limit hit for Crunchbase", message: "21 read failures for Crunchbase's Salesforce integration. Error: 429 Too Many Requests — API limit exceeded. Next retry scheduled.", customer: "Crunchbase", provider: "Salesforce", time: "Jun 16, 2026, 2:22 PM", acknowledged: false, customerRef: "crunchbase-ref", installationIdx: 1, operationIdx: 11 },
   { id: "alert-4", severity: "warning", type: "read.schedule.paused", title: "Netsuite scheduled read paused for Spreedly", message: "Scheduled reads have been paused due to repeated failures. Manual intervention required to resume.", customer: "Spreedly", provider: "Netsuite", time: "May 4, 2026, 11:00 PM", acknowledged: true, customerRef: "spreedly-ref", installationIdx: 0, operationIdx: null },
-  { id: "alert-5", severity: "info", type: "operation.partial_success", title: "Partial sync for Demo Org Fathom", message: "382 of 400 records synced successfully. 18 records skipped due to missing required fields.", customer: "Demo Org", provider: "Fathom", time: "Jun 12, 2026, 10:47 PM", acknowledged: true, customerRef: "g2-ref", installationIdx: 0, operationIdx: null },
+  { id: "alert-5", severity: "info", type: "operation.partial_success", title: "Partial sync for Crunchbase Fathom", message: "382 of 400 records synced successfully. 18 records skipped due to missing required fields.", customer: "Crunchbase", provider: "Fathom", time: "Jun 12, 2026, 10:47 PM", acknowledged: true, customerRef: "crunchbase-ref", installationIdx: 0, operationIdx: null },
 ];
 
 const NAV_ITEMS = [
@@ -222,7 +222,7 @@ function CustomersList({ onSelectCustomer }) {
                     </div>
                     {c.totalFailures7d > 0 && (
                       <div style={{ fontSize: 11, color: "#999", marginTop: 2, paddingLeft: 14 }}>
-                        {c.failedInstallations} of {c.installations} failing · {c.totalFailures7d} errors (7d)
+                        {c.failedInstallations} of {c.installations} with errors · {c.totalFailures7d} errors (7d)
                       </div>
                     )}
                   </td>
@@ -238,8 +238,8 @@ function CustomersList({ onSelectCustomer }) {
   );
 }
 
-function CustomerDetail({ customer, onBack, onSelectInstallation }) {
-  const installs = INSTALLATIONS[customer.name] || INSTALLATIONS["Demo Org"];
+function CustomerDetail({ customer, onBack, onSelectInstallation, onSelectError }) {
+  const installs = INSTALLATIONS[customer.name] || INSTALLATIONS["Crunchbase"];
   return (
     <div style={{ flex: 1, padding: "24px 32px", overflow: "auto" }}>
       <div style={{ fontSize: 13, color: "#666", marginBottom: 4 }}>
@@ -269,9 +269,9 @@ function CustomerDetail({ customer, onBack, onSelectInstallation }) {
             <tr style={{ borderBottom: "1px solid #e5e5e5" }}>
               <th style={{ width: 32 }}></th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Integration</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Status</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Connection</th>
               <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13, minWidth: 220 }}>Operations (7 days)</th>
-              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Errors (7 days)</th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#555", fontSize: 13 }}>Most recent error</th>
               <th style={{ width: 32 }}></th>
             </tr>
           </thead>
@@ -328,7 +328,12 @@ function CustomerDetail({ customer, onBack, onSelectInstallation }) {
                 </td>
                 <td style={{ padding: "12px" }}>
                   {inst.lastError ? (
-                    <div>
+                    <div
+                      style={{ cursor: "pointer", padding: "4px 6px", margin: "-4px -6px", borderRadius: 4 }}
+                      onClick={(e) => { e.stopPropagation(); onSelectError(inst, inst.errorOperationIdx); }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "#fef2f2"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >
                       <div style={{ fontSize: 12, color: "#dc2626", fontFamily: "monospace" }}>{inst.lastError}</div>
                       <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{inst.lastErrorTime}</div>
                     </div>
@@ -813,7 +818,7 @@ function App() {
   const handleAlertClick = (alert) => {
     const customer = CUSTOMERS.find(c => c.groupRef === alert.customerRef);
     if (!customer) return;
-    const installs = INSTALLATIONS[customer.name] || INSTALLATIONS["Demo Org"];
+    const installs = INSTALLATIONS[customer.name] || INSTALLATIONS["Crunchbase"];
     const installation = installs[alert.installationIdx];
     if (!installation) return;
     setSelectedCustomer(customer);
@@ -834,6 +839,7 @@ function App() {
           customer={selectedCustomer}
           onBack={() => { setView("list"); setSelectedCustomer(null); }}
           onSelectInstallation={inst => { setSelectedInstallation(inst); setView("operations"); }}
+          onSelectError={(inst, opIdx) => { setSelectedInstallation(inst); setAutoOpenOpIndex(opIdx); setView("operations"); }}
         />
       )}
       {view === "operations" && selectedInstallation && (
